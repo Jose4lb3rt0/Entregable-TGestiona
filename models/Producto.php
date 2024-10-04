@@ -1,22 +1,69 @@
 <?php 
 
-class Producto {
-    private $id;
-    private $nombre;
-    private $marca;
-    private $precio;
-    private $stock;
-    private $categoria_id;
-    private $fecha_creacion;
+require_once '../config/config.php';
 
-    public function __construct($id, $nombre, $descripcion, $precio, $stock, $categoria_id, $fecha_creacion) {
+class Producto {
+    protected $id;
+    protected $nombre;
+    protected $marca;
+    protected $precio;
+    protected $stock;
+    protected $categoria_id;
+    protected $fecha_creacion;
+
+    public function __construct($id, $nombre, $marca, $precio, $stock, $categoria_id, $fecha_creacion) {
         $this->id = $id;
         $this->nombre = $nombre;
-        $this->descripcion = $descripcion;
+        $this->marca = $marca;
         $this->precio = $precio;
         $this->stock = $stock;
         $this->categoria_id = $categoria_id;
         $this->fecha_creacion = $fecha_creacion;
+    }
+
+    public function crearProducto($producto) {
+        $sql = "INSERT INTO productos (nombre, marca, precio, stock, categoria_id, fecha_creacion) 
+                VALUES (:nombre, :marca, :precio, :stock, :categoria_id, :fecha_creacion)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':nombre' => $producto->getNombre(),
+            ':marca' => $producto->getMarca(),
+            ':precio' => $producto->getPrecio(),
+            ':stock' => $producto->getStock(),
+            ':categoria_id' => $producto->getCategoriaId(),
+            ':fecha_creacion' => $producto->getFechaCreacion(),
+        ]);
+    }
+
+    public function listarProductos() {
+        $sql = "SELECT * FROM productos";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function buscarProducto($id) {
+        $sql = "SELECT * FROM productos WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function actualizarProducto($id, $nombre, $precio, $stock) {
+        $sql = "UPDATE productos SET nombre = :nombre, precio = :precio, stock = :stock WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':id' => $id,
+            ':nombre' => $nombre,
+            ':precio' => $precio,
+            ':stock' => $stock
+        ]);
+    }
+
+    public function eliminarProducto($id) {
+        $sql = "DELETE FROM productos WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
     }
 
     public function getId() {
@@ -27,8 +74,8 @@ class Producto {
         return $this->nombre;
     }
 
-    public function getDescripcion() {
-        return $this->descripcion;
+    public function getMarca() {
+        return $this->marca;
     }
 
     public function getPrecio() {
@@ -55,8 +102,8 @@ class Producto {
         $this->nombre = $nombre;
     }
 
-    public function setDescripcion($descripcion) {
-        $this->descripcion = $descripcion;
+    public function setMarca($marca) {
+        $this->marca = $marca;
     }
 
     public function setPrecio($precio) {
@@ -76,6 +123,6 @@ class Producto {
     }
 
     public function __toString() {
-        return "Producto[id=$this->id, nombre=$this->nombre, descripcion=$this->descripcion, precio=$this->precio, stock=$this->stock, categoria_id=$this->categoria_id, fecha_creacion=$this->fecha_creacion]";
+        return "Producto[id=$this->id, nombre=$this->nombre, marca=$this->marca, precio=$this->precio, stock=$this->stock, categoria_id=$this->categoria_id, fecha_creacion=$this->fecha_creacion]";
     }
 }
