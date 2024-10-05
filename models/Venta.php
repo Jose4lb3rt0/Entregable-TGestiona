@@ -28,11 +28,23 @@ class Venta{
 
     public function listarVentas(){
         global $pdo;
-        $sql = "SELECT v.id, v.fecha_venta, v.total, c.nombre as cliente_nombre, c.apellido as cliente_apellido
+        $sql = "SELECT v.id, v.fecha_venta, v.total, c.nombre as cliente_nombre, c.apellido as cliente_apellido, c.email as cliente_email
                 FROM ventas v
                 INNER JOIN clientes c ON v.cliente_id = c.id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function buscarVentaPorId($venta_id) {
+        global $pdo;
+        $sql = "SELECT v.*, c.nombre as cliente_nombre, c.apellido as cliente_apellido, c.email as cliente_email
+                FROM ventas v
+                INNER JOIN clientes c ON v.cliente_id = c.id
+                WHERE v.id = :venta_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':venta_id' => $venta_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
 }

@@ -87,6 +87,7 @@
                             <th>Fecha de Venta</th>
                             <th>Cliente</th>
                             <th>Total</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaVentas">
@@ -118,6 +119,11 @@
                             <td>${venta.fecha_venta}</td>
                             <td>${venta.cliente_nombre} ${venta.cliente_apellido}</td>
                             <td>S/ ${venta.total}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary btnEnviarCorreo" data-id="${venta.id}">
+                                    Enviar Correo
+                                </button>
+                            </td>
                         </tr>
                     `)
                 })
@@ -196,6 +202,30 @@
             })
         })
     })
+
+    $(document).ready(function(){
+    $(document).on('click', '.btnEnviarCorreo', function(){
+        var ventaId = $(this).data('id');
+
+        $.ajax({
+                url: '../ajax/ajax_enviar_correo.php',
+                type: 'POST',
+                data: { venta_id: ventaId },
+                success: function(response){
+                    const json = JSON.parse(response);
+                    if(json.status === 'success'){
+                        alert(json.message);
+                    } else {
+                        alert(json.message);
+                    }
+                },
+                error: function(){
+                    alert('Error al enviar el correo.');
+                }
+            });
+        });
+    });
+
 </script>
 
 </body>
