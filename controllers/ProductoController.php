@@ -83,6 +83,11 @@ class ProductoController {
         }
     }
 
+    public function listarProductos(){
+        $productos = $this->model->obtenerProductos();
+        return $productos;
+    }
+
     public function eliminarProducto() {
         if (isset($_POST['producto_id'])) {
             $producto_id = $_POST['producto_id'];

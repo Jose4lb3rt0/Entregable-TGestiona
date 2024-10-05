@@ -101,6 +101,15 @@ class Producto {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function obtenerProductos() {
+        global $pdo;
+
+        $sql = "SELECT * FROM productos";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function eliminarProducto($producto_id) {
         global $pdo;
 
