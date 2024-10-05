@@ -124,23 +124,83 @@ class Producto {
     }
 
     public function buscarProducto($id) {
+        global $pdo;
+    
         $sql = "SELECT * FROM productos WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+        if ($producto) {
+            if ($producto['categoria'] == '1') {
+                $sql = "SELECT * FROM producto_computadora WHERE productos_id = :id";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([':id' => $id]);
+                $detalles = $stmt->fetch(PDO::FETCH_ASSOC);
+                $producto = array_merge($producto, $detalles);
+            } else if ($producto['categoria'] == '2') {
+                $sql = "SELECT * FROM producto_ropa WHERE productos_id = :id";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([':id' => $id]);
+                $detalles = $stmt->fetch(PDO::FETCH_ASSOC);
+                $producto = array_merge($producto, $detalles);
+            } else if ($producto['categoria'] == '3') {
+                $sql = "SELECT * FROM producto_electrodomestico WHERE productos_id = :id";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([':id' => $id]);
+                $detalles = $stmt->fetch(PDO::FETCH_ASSOC);
+                $producto = array_merge($producto, $detalles);
+            }
+            return $producto;
+        } else {
+            return false;
+        }
     }
 
-    public function actualizarProducto($id, $nombre, $precio, $stock) {
-        $sql = "UPDATE productos SET nombre = :nombre, precio = :precio, stock = :stock WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
+    public function actualizarProducto($producto) {
+        global $pdo;
+        $sql = "UPDATE productos SET nombre = :nombre, marca = :marca, precio = :precio, stock = :stock, categoria = :categoria, fecha_creacion = :fecha_creacion WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':id' => $id,
-            ':nombre' => $nombre,
-            ':precio' => $precio,
-            ':stock' => $stock
+            ':nombre' => $producto['nombre'],
+            ':marca' => $producto['marca'],
+            ':precio' => $producto['precio'],
+            ':stock' => $producto['stock'],
+            ':categoria' => $producto['categoria'],
+            ':fecha_creacion' => $producto['fecha_creacion'],
+            ':id' => $producto['id']
         ]);
-    }
 
+        if ($producto['categoria'] == '1') {
+            $sql = "UPDATE producto_computadora SET procesador = :procesador, ram = :ram, disco_duro = :disco_duro, tarjeta_grafica = :tarjeta_grafica WHERE productos_id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':procesador' => $producto['procesador'],
+                ':ram' => $producto['ram'],
+                ':disco_duro' => $producto['disco_duro'],
+                ':tarjeta_grafica' => $producto['tarjeta_grafica'],
+                ':id' => $producto['id']
+            ]);
+        } else if ($producto['categoria'] == '2') {
+            $sql = "UPDATE producto_ropa SET talla = :talla, color = :color, genero = :genero WHERE productos_id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':talla' => $producto['talla'],
+                ':color' => $producto['color'],
+                ':genero' => $producto['genero'],
+                ':id' => $producto['id']
+            ]);
+        } else if ($producto['categoria'] == '3') {
+            $sql = "UPDATE producto_electrodomestico SET consumo_energetico = :consumo_energetico WHERE productos_id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':consumo_energetico' => $producto['consumo_energetico'],
+                ':id' => $producto['id']
+            ]);
+        }
+
+        return $stmt->rowCount(); 
+    }
 
     public function getId() {
         return $this->id;

@@ -111,14 +111,57 @@ class ProductoController {
         return $producto;
     }
 
-    public function actualizarProducto($id) {
-        if (isset($_POST['nombre'], $_POST['precio'], $_POST['stock'])) {
-            $nombre = $_POST['nombre'];
-            $precio = $_POST['precio'];
-            $stock = $_POST['stock'];
+    public function actualizarProducto() {
+        if (isset($_POST['id'], $_POST['nombre'], $_POST['marca'], $_POST['precio'], $_POST['stock'], $_POST['categoria_id'])) {
+            $producto = [
+                'id' => $_POST['id'],
+                'nombre' => $_POST['nombre'],
+                'marca' => $_POST['marca'],
+                'precio' => $_POST['precio'],
+                'stock' => $_POST['stock'],
+                'categoria' => $_POST['categoria_id'],
+                'fecha_creacion' => date('Y-m-d H:i:s')  
+            ];
 
-            $this->model->actualizarProducto($id, $nombre, $precio, $stock);
-            header('Location: /views/producto/index.php');
+            if ($producto['categoria'] == '1') {
+                // Computadoras
+                if (empty($_POST['procesador']) || empty($_POST['ram']) || empty($_POST['disco_duro']) || empty($_POST['tarjeta_grafica'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Faltan campos requeridos para Computadoras.']);
+                    return;
+                }
+                $producto['procesador'] = $_POST['procesador'];
+                $producto['ram'] = $_POST['ram'];
+                $producto['disco_duro'] = $_POST['disco_duro'];
+                $producto['tarjeta_grafica'] = $_POST['tarjeta_grafica'];
+            } else if ($producto['categoria'] == '2') {
+                // Ropa
+                if (empty($_POST['talla']) || empty($_POST['color']) || empty($_POST['genero'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Faltan campos requeridos para Ropa.']);
+                    return;
+                }
+                $producto['talla'] = $_POST['talla'];
+                $producto['color'] = $_POST['color'];
+                $producto['genero'] = $_POST['genero'];
+            } else if ($producto['categoria'] == '3') {
+                // Electrodomésticos
+                if (empty($_POST['consumo_energetico'])) {
+                    echo json_encode(['status' => 'error', 'message' => 'Faltan campos requeridos para Electrodomésticos.']);
+                    return;
+                }
+                $producto['consumo_energetico'] = $_POST['consumo_energetico'];
+            }
+
+            $result = $this->model->actualizarProducto($producto);
+
+            if ($result > 0) {
+                $response = ['status' => 'success', 'message' => 'Producto actualizado correctamente.'];
+            } else {
+                $response = ['status' => 'error', 'message' => 'No se pudo actualizar el producto.'];
+            }
+
+            echo json_encode($response);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Faltan campos requeridos.']);
         }
     }
 }

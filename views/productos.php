@@ -196,21 +196,22 @@ function mostrarCamposPorCategoria(categoriaId) {
 }
 
 function mostrarTablaPorCategoria(categoriaId){
-    $('#tablaComputadora').hide()
-    $('#tablaRopa').hide()
-    $('#tablaElectrodomestico').hide()
+    $('#tablaComputadora').hide();
+    $('#tablaRopa').hide();
+    $('#tablaElectrodomestico').hide();
 
     if (categoriaId == '1') {
-        $('#tablaComputadora').show()
-        cargarProductosPorCategoria(categoriaId, '#tbodyComputadora')
+        $('#tablaComputadora').show();
+        cargarProductosPorCategoria(categoriaId, '#tbodyComputadora');
     } else if (categoriaId == '2') {
-        $('#tablaRopa').show()
-        cargarProductosPorCategoria(categoriaId, '#tbodyRopa')
+        $('#tablaRopa').show();
+        cargarProductosPorCategoria(categoriaId, '#tbodyRopa');
     } else if (categoriaId == '3') {
-        $('#tablaElectrodomestico').show()
-        cargarProductosPorCategoria(categoriaId, '#tbodyElectrodomestico')
+        $('#tablaElectrodomestico').show();
+        cargarProductosPorCategoria(categoriaId, '#tbodyElectrodomestico');
     }
 }
+
 
 $('#categoria_id').change(function() {
     var categoriaId = $(this).val();
@@ -247,6 +248,9 @@ function cargarProductosPorCategoria(categoriaId, tablaId){
                             <td>${producto.categoria_id}</td>
                             <td>${producto.fecha_creacion}</td>
                             <td>
+                                <button class="btn btn-sm btn-warning btnEditar" data-id="${producto.id}">
+                                    Editar
+                                </button>
                                 <button class="btn btn-sm btn-danger btnEliminar" data-id="${producto.id}">
                                     Eliminar
                                 </button>
@@ -267,6 +271,9 @@ function cargarProductosPorCategoria(categoriaId, tablaId){
                             <td>${producto.categoria_id}</td>
                             <td>${producto.fecha_creacion}</td>
                             <td>
+                                <button class="btn btn-sm btn-warning btnEditar" data-id="${producto.id}">
+                                    Editar
+                                </button>
                                 <button class="btn btn-sm btn-danger btnEliminar" data-id="${producto.id}">
                                     Eliminar
                                 </button>
@@ -285,6 +292,9 @@ function cargarProductosPorCategoria(categoriaId, tablaId){
                             <td>${producto.categoria_id}</td>
                             <td>${producto.fecha_creacion}</td>
                             <td>
+                                <button class="btn btn-sm btn-warning btnEditar" data-id="${producto.id}">
+                                    Editar
+                                </button>
                                 <button class="btn btn-sm btn-danger btnEliminar" data-id="${producto.id}">
                                     Eliminar
                                 </button>
@@ -313,8 +323,8 @@ function eliminarProducto(producto_id) {
                 var json = JSON.parse(response)
 
                 if (json.status === 'success') {
-                    alert(json.message);
-                    cargarProductosPorCategoria($('#categoria_view_table').val(), '#tbodyComputadora')
+                    $('#mensaje').html('<div class="alert alert-success">' + json.message + '</div>')
+                    recargarTablaSegunCategoria();
                 } else {
                     alert(json.message)
                 }
@@ -326,32 +336,82 @@ function eliminarProducto(producto_id) {
     }
 }
 
+function recargarTablaSegunCategoria() {
+    var categoriaId = $('#categoria_view_table').val(); // Obtener la categoría seleccionada
+    mostrarTablaPorCategoria(categoriaId);  // Llamar a la función que carga la tabla correcta
+}
+
 
 $('#productoForm').submit(function(e){
-    e.preventDefault()
+    e.preventDefault();
 
-    var url = '../ajax/ajax_crear_producto.php'
+    var url = $('#productoId').val() ? '../ajax/ajax_actualizar_producto.php' : '../ajax/ajax_crear_producto.php'; // Cambiar entre crear/actualizar según si hay un ID
 
     $.ajax({
         url: url,
         type: 'POST',
         data: $(this).serialize(),
         success: function(response) {
-            var json = JSON.parse(response)
+            var json = JSON.parse(response);
 
             if (json.status === 'success') {
-                $('#productoForm')[0].reset()
-                $('#mensaje').html('<div class="alert alert-success">' + json.message + '</div>')
-                cargarProductos()
+                $('#productoForm')[0].reset();
+                $('#mensaje').html('<div class="alert alert-success">' + json.message + '</div>');
+                recargarTablaSegunCategoria(); // Recargar la tabla
             } else {
-                $('#mensaje').html('<div class="alert alert-danger">' + json.message + '</div>')
+                $('#mensaje').html('<div class="alert alert-danger">' + json.message + '</div>');
             }
         },
-        error: function(){
+        error: function() {
             $('#mensaje').html('<div class="alert alert-danger">Error al procesar la solicitud. Inténtelo nuevamente.</div>');
         }
-    })
-})
+    });
+});
+
+function cargarProductoParaEditar(producto_id) {
+    $.ajax({
+        url: '../ajax/ajax_buscar_producto.php', // Archivo para obtener los datos del producto
+        type: 'GET',
+        data: { id: producto_id },
+        success: function(response) {
+            var producto = JSON.parse(response);
+
+            // Rellenar el formulario con los datos del producto
+            $('#productoId').val(producto.id);
+            $('#nombre').val(producto.nombre);
+            $('#marca').val(producto.marca);
+            $('#precio').val(producto.precio);
+            $('#stock').val(producto.stock);
+            $('#categoria_id').val(producto.categoria); // Asegúrate de mostrar los campos específicos de la categoría
+            mostrarCamposPorCategoria(producto.categoria);
+
+            if (producto.categoria == '1') {
+                $('#procesador').val(producto.procesador);
+                $('#ram').val(producto.ram);
+                $('#disco_duro').val(producto.disco_duro);
+                $('#tarjeta_grafica').val(producto.tarjeta_grafica);
+            } else if (producto.categoria == '2') {
+                $('#talla').val(producto.talla);
+                $('#color').val(producto.color);
+                $('#genero').val(producto.genero);
+            } else if (producto.categoria == '3') {
+                $('#consumo_energetico').val(producto.consumo_energetico);
+            }
+
+            $('#form-title').text('Editar Producto');
+            $('#submitButton').text('Actualizar Producto');
+        },
+        error: function() {
+            alert('Error al cargar los datos del producto.');
+        }
+    });
+}
+
+$(document).on('click', '.btnEditar', function(e) {
+    e.preventDefault();
+    var id = $(this).data('id');
+    cargarProductoParaEditar(id);
+});
 
 $('#categoria_view_table').change(function(){
     var categoriaId = $(this).val()
@@ -361,6 +421,11 @@ $('#categoria_view_table').change(function(){
 $(document).ready(function(){
     $('#categoria_view_table').trigger('change');
 })
+
+$(document).ready(function(){
+    recargarTablaSegunCategoria()
+})
+
 </script>
 
 </body>
