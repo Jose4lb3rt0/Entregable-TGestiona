@@ -44,14 +44,17 @@ class ClienteController {
     }
 
     public function actualizarCliente() {
-        if (isset($_POST['id'], $_POST['nombre'], $_POST['dni'], $_POST['email'], $_POST['telefono'])) {
+        if (isset($_POST['id'], $_POST['nombre'], $_POST['apellido'], $_POST['dni'], $_POST['email'], $_POST['telefono'])) {
             $id = $_POST['id'];
             $nombre = $_POST['nombre'];
+            $apellido = $_POST['apellido'];
             $dni = $_POST['dni'];
             $email = $_POST['email'];
             $telefono = $_POST['telefono'];
 
-            $this->model->actualizarCliente($id, $nombre, $dni, $email, $telefono);
+            $cliente = new Cliente($id, $nombre, $apellido, $dni, $email, $telefono);
+
+            $this->model->actualizarCliente($cliente);
         } else {
             die('Faltan campos requeridos para el cliente.');
         }

@@ -15,57 +15,100 @@ class ProductoController {
             $marca = $_POST['marca'];
             $precio = $_POST['precio'];
             $stock = $_POST['stock'];
-            $categoria_id = $_POST['categoria_id'];
-            $fecha_creacion = date('Y-m-d H:i:s');
+            $categoria = $_POST['categoria_id'];
 
-            if ($categoria_id == 1) {
+            $datosComunes = [
+                'nombre' => $nombre,
+                'marca' => $marca,
+                'precio' => $precio,
+                'stock' => $stock,
+                'categoria' => $categoria
+            ];
+
+            $datosCategoria = [];
+            
+            if ($categoria == '1') { 
                 if (isset($_POST['procesador'], $_POST['ram'], $_POST['disco_duro'], $_POST['tarjeta_grafica'])) {
-                    $procesador = $_POST['procesador'];
-                    $ram = $_POST['ram'];
-                    $disco_duro = $_POST['disco_duro'];
-                    $tarjeta_grafica = $_POST['tarjeta_grafica'];
-                    $producto = new ProductoComputadora(null, $nombre, $marca, $precio, $stock, $categoria_id, $fecha_creacion, $procesador, $ram, $disco_duro, $tarjeta_grafica);
-                } else {
-                    die('Faltan campos para la categoría computadora.');
+                    $datosCategoria = [
+                        'procesador' => $_POST['procesador'],
+                        'ram' => $_POST['ram'],
+                        'disco_duro' => $_POST['disco_duro'],
+                        'tarjeta_grafica' => $_POST['tarjeta_grafica']
+                    ];
                 }
-            } else if ($categoria_id == 2) {
+            } elseif ($categoria == '2') { 
                 if (isset($_POST['talla'], $_POST['color'], $_POST['genero'])) {
-                    $talla = $_POST['talla'];
-                    $color = $_POST['color'];
-                    $genero = $_POST['genero'];
-                    $producto = new ProductoRopa(null, $nombre, $marca, $precio, $stock, $categoria_id, $fecha_creacion, $talla, $color, $genero);
-                } else {
-                    die('Faltan campos para la categoría ropa.');
+                    $datosCategoria = [
+                        'talla' => $_POST['talla'],
+                        'color' => $_POST['color'],
+                        'genero' => $_POST['genero']
+                    ];
                 }
-            } else if ($categoria_id == 3) {
+            } elseif ($categoria == '3') { 
                 if (isset($_POST['consumo_energetico'])) {
-                    $consumo_energetico = $_POST['consumo_energetico'];
-                    $producto = new ProductoElectrodomestico(null, $nombre, $marca, $precio, $stock, $categoria_id, $fecha_creacion, $consumo_energetico);
-                } else {
-                    die('Faltan campos para la categoría electrodoméstico.');
+                    $datosCategoria = [
+                        'consumo_energetico' => $_POST['consumo_energetico']
+                    ];
                 }
-            } else {
-                die('Categoría inválida.');
             }
 
-            $this->model->crearProducto($producto);
+            $this->model->crearProducto($datosComunes, $datosCategoria);
+
+            $response = [
+                'status' => 'success',
+                'message' => 'Producto creado correctamente.'
+            ];
+            echo json_encode($response);
         } else {
-            die('Faltan campos requeridos para el producto.');
+            $response = [
+                'status' => 'error',
+                'message' => 'Faltan campos requeridos.'
+            ];
+            echo json_encode($response);
         }
     }
 
-    public function listarProductos() {
-        $productos = $this->model->listarProductos();
-        return $productos;
+    public function listarProductosPorCategoria(){
+        if (isset($_GET['categoria_id'])){
+            $categoria_id = $_GET['categoria_id'];
+            $productos = $this->model->listarProductosPorCategoria($categoria_id);
+
+            echo json_encode($productos);
+        }else{
+            $response = [
+                'status' => 'error',
+                'message' => 'Error al listar productos por categoria.'
+            ];
+            echo json_encode($response);
+        }
+    }
+
+    public function eliminarProducto() {
+        if (isset($_POST['producto_id'])) {
+            $producto_id = $_POST['producto_id'];
+
+            $result = $this->model->eliminarProducto($producto_id);
+
+            if ($result > 0) {
+                $response = [
+                    'status' => 'success', 
+                    'message' => 'Producto eliminado correctamente.'
+                ];
+            } else {
+                $response = ['status' => 'error', 
+                'message' => 'Error al eliminar el producto.'
+            ];
+            }
+
+            echo json_encode($response);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No se especificó el ID del producto.']);
+        }
     }
 
     public function buscarProducto($id) {
         $producto = $this->model->buscarProducto($id);
         return $producto;
-    }
-
-    public function eliminarProducto($id) {
-        $this->model->eliminarProducto($id);
     }
 
     public function actualizarProducto($id) {

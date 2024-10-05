@@ -13,7 +13,7 @@
             <div class="card-body">
                 <div id="mensaje"></div>
                 <form id="crearClienteForm" >
-                    <input type="" id="clienteId" name="id">
+                    <input type="hidden" id="clienteId" name="id">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="nombre" class="form-label">Nombre</label>
@@ -88,8 +88,12 @@ function cargarClientes(){
                         <td>${cliente.email}</td>
                         <td>${cliente.telefono}</td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-warning btnEditar" data-id="${cliente.id}">Editar</a>
-                            <a href="#" class="btn btn-sm btn-danger btnEliminar" data-id="${cliente.id}">Eliminar</a>
+                            <a href="#" class="btn btn-sm btn-warning btnEditar" data-id="${cliente.id}">
+                                Editar
+                            </a>
+                            <a href="#" class="btn btn-sm btn-danger btnEliminar" data-id="${cliente.id}">
+                                Eliminar
+                            </a>
                         </td>
                     </tr>
                 `)
@@ -159,10 +163,10 @@ function eliminarCliente(id){
 $('#crearClienteForm').submit(function(e){
     e.preventDefault()
     
-    var id = $('#clienteId').val() ? '../ajax/ajax_actualizar_cliente.php' : '../ajax/ajax_crear_cliente.php';
+    var url = $('#clienteId').val() ? '../ajax/ajax_actualizar_cliente.php' : '../ajax/ajax_crear_cliente.php';
 
     $.ajax({
-        url: '../ajax/ajax_crear_cliente.php',  
+        url: url,  
         type: 'POST',
         data: $(this).serialize(), 
         success: function(response) {

@@ -8,38 +8,119 @@ class Producto {
     protected $marca;
     protected $precio;
     protected $stock;
-    protected $categoria_id;
+    protected $categoria;
     protected $fecha_creacion;
 
-    public function __construct($id, $nombre, $marca, $precio, $stock, $categoria_id, $fecha_creacion) {
+    public function __construct($id = null, $nombre = '', $marca = '', $precio = '', $stock = '', $categoria = '', $fecha_creacion = '') {
         $this->id = $id;
         $this->nombre = $nombre;
         $this->marca = $marca;
         $this->precio = $precio;
         $this->stock = $stock;
-        $this->categoria_id = $categoria_id;
+        $this->categoria = $categoria;
         $this->fecha_creacion = $fecha_creacion;
     }
 
-    public function crearProducto($producto) {
-        $sql = "INSERT INTO productos (nombre, marca, precio, stock, categoria_id, fecha_creacion) 
-                VALUES (:nombre, :marca, :precio, :stock, :categoria_id, :fecha_creacion)";
-        $stmt = $this->pdo->prepare($sql);
+    public function crearProducto($datos, $categoriaEspecifica){
+        global $pdo;
+        $sql = "INSERT INTO productos (nombre, marca, precio, stock, categoria, fecha_creacion)  
+                VALUES (:nombre, :marca, :precio, :stock, :categoria, :fecha_creacion)";
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':nombre' => $producto->getNombre(),
-            ':marca' => $producto->getMarca(),
-            ':precio' => $producto->getPrecio(),
-            ':stock' => $producto->getStock(),
-            ':categoria_id' => $producto->getCategoriaId(),
-            ':fecha_creacion' => $producto->getFechaCreacion(),
+            ':nombre' => $datos['nombre'],
+            ':marca' => $datos['marca'],
+            ':precio' => $datos['precio'],
+            ':stock' => $datos['stock'],
+            ':categoria' => $datos['categoria'],
+            ':fecha_creacion' => date('Y-m-d H:i:s')
         ]);
+
+        $productoId = $pdo->lastInsertId();
+
+        switch($datos['categoria']){
+            case 1:
+                $sqlComputadora = "INSERT INTO producto_computadora (productos_id, procesador, ram, disco_duro, tarjeta_grafica)
+                                   VALUES (:productos_id, :procesador, :ram, :disco_duro, :tarjeta_grafica)";
+                $stmt = $pdo->prepare($sqlComputadora);
+                $stmt->execute([
+                    ':productos_id' => $productoId,
+                    ':procesador' => $categoriaEspecifica['procesador'],
+                    ':ram' => $categoriaEspecifica['ram'],
+                    ':disco_duro' => $categoriaEspecifica['disco_duro'],
+                    ':tarjeta_grafica' => $categoriaEspecifica['tarjeta_grafica']
+                ]);
+                break;
+            case 2:
+                $sqlRopa = "INSERT INTO producto_ropa (productos_id, talla, color, genero)
+                            VALUES (:productos_id, :talla, :color, :genero)";
+                $stmt = $pdo->prepare($sqlRopa);
+                $stmt->execute([
+                    ':productos_id' => $productoId,
+                    ':talla' => $categoriaEspecifica['talla'],
+                    ':color' => $categoriaEspecifica['color'],
+                    ':genero' => $categoriaEspecifica['genero']
+                ]);
+                break;
+            case '3': 
+                $sqlElectrodomestico = "INSERT INTO producto_electrodomestico (productos_id, consumo_energetico)
+                                        VALUES (:productos_id, :consumo_energetico)";
+                $stmt = $pdo->prepare($sqlElectrodomestico);
+                $stmt->execute([
+                    ':productos_id' => $productoId,
+                    ':consumo_energetico' => $categoriaEspecifica['consumo_energetico']
+                ]);
+                break;
+        }
     }
 
-    public function listarProductos() {
-        $sql = "SELECT * FROM productos";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+    public function listarProductosPorCategoria($categoria_id) {
+        global $pdo;
+
+        if ($categoria_id == '1') {
+            $sql = "SELECT p.id, p.nombre, p.marca, p.precio, p.stock, p.categoria, p.fecha_creacion, 
+                           c.procesador, c.ram, c.disco_duro, c.tarjeta_grafica
+                    FROM productos p
+                    JOIN producto_computadora c ON p.id = c.productos_id
+                    WHERE p.categoria = :categoria_id";
+        } elseif ($categoria_id == '2') {
+            $sql = "SELECT p.id, p.nombre, p.marca, p.precio, p.stock, p.categoria, p.fecha_creacion, 
+                           r.talla, r.color, r.genero
+                    FROM productos p
+                    JOIN producto_ropa r ON p.id = r.productos_id
+                    WHERE p.categoria = :categoria_id";
+        } elseif ($categoria_id == '3') {
+            $sql = "SELECT p.id, p.nombre, p.marca, p.precio, p.stock, p.categoria, p.fecha_creacion, 
+                           e.consumo_energetico
+                    FROM productos p
+                    JOIN producto_electrodomestico e ON p.id = e.productos_id
+                    WHERE p.categoria = :categoria_id";
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['categoria_id' => $categoria_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function eliminarProducto($producto_id) {
+        global $pdo;
+
+        $sqlComputadora = "DELETE FROM producto_computadora WHERE productos_id = :producto_id";
+        $stmt = $pdo->prepare($sqlComputadora);
+        $stmt->execute(['producto_id' => $producto_id]);
+
+        $sqlRopa = "DELETE FROM producto_ropa WHERE productos_id = :producto_id";
+        $stmt = $pdo->prepare($sqlRopa);
+        $stmt->execute(['producto_id' => $producto_id]);
+
+        $sqlElectrodomestico = "DELETE FROM producto_electrodomestico WHERE productos_id = :producto_id";
+        $stmt = $pdo->prepare($sqlElectrodomestico);
+        $stmt->execute(['producto_id' => $producto_id]);
+
+        $sql = "DELETE FROM productos WHERE id = :producto_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['producto_id' => $producto_id]);
+
+        return $stmt->rowCount();
     }
 
     public function buscarProducto($id) {
@@ -60,11 +141,6 @@ class Producto {
         ]);
     }
 
-    public function eliminarProducto($id) {
-        $sql = "DELETE FROM productos WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':id' => $id]);
-    }
 
     public function getId() {
         return $this->id;
@@ -86,8 +162,8 @@ class Producto {
         return $this->stock;
     }
 
-    public function getCategoriaId() {
-        return $this->categoria_id;
+    public function getCategoria() {
+        return $this->categoria;
     }
 
     public function getFechaCreacion() {
@@ -114,8 +190,8 @@ class Producto {
         $this->stock = $stock;
     }
 
-    public function setCategoriaId($categoria_id) {
-        $this->categoria_id = $categoria_id;
+    public function setCategoria($categoria) {
+        $this->categoria = $categoria;
     }
 
     public function setFechaCreacion($fecha_creacion) {
@@ -123,6 +199,6 @@ class Producto {
     }
 
     public function __toString() {
-        return "Producto[id=$this->id, nombre=$this->nombre, marca=$this->marca, precio=$this->precio, stock=$this->stock, categoria_id=$this->categoria_id, fecha_creacion=$this->fecha_creacion]";
+        return "Producto[id=$this->id, nombre=$this->nombre, marca=$this->marca, precio=$this->precio, stock=$this->stock, categoria=$this->categoria, fecha_creacion=$this->fecha_creacion]";
     }
 }
